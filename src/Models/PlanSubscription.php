@@ -19,6 +19,7 @@ use Rinvex\Subscriptions\Traits\BelongsToPlan;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Validation\Rule;
 
 /**
  * Rinvex\Subscriptions\Models\PlanSubscription.
@@ -148,10 +149,21 @@ class PlanSubscription extends Model
     public function __construct(array $attributes = [])
     {
         $this->setTable(config('rinvex.subscriptions.tables.plan_subscriptions'));
-        $this->mergeRules([
+        $this->mergeRules(
+            [
             'name' => 'required|string|strip_tags|max:150',
             'description' => 'nullable|string|max:32768',
-            'slug' => 'required|alpha_dash|max:150|unique:'.config('rinvex.subscriptions.tables.plan_subscriptions').',slug',
+            'slug' => [
+                'required',
+                'alpha_dash',
+                'max:150',
+                Rule::unique(config('rinvex.subscriptions.tables.plan_subscriptions'))
+                    ->where(
+                        function ($query) {
+                            return $query->where('id', '!=', $this->id)->where('subscriber_type', $this->user_type)->where('subscriber_id', $this->user_id);
+                        }
+                    )
+            ],
             'plan_id' => 'required|integer|exists:'.config('rinvex.subscriptions.tables.plans').',id',
             'subscriber_id' => 'required|integer',
             'subscriber_type' => 'required|string|strip_tags|max:150',
@@ -160,7 +172,8 @@ class PlanSubscription extends Model
             'ends_at' => 'required|date',
             'cancels_at' => 'nullable|date',
             'canceled_at' => 'nullable|date',
-        ]);
+            ]
+        );
 
         parent::__construct($attributes);
     }
