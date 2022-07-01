@@ -204,6 +204,7 @@ class PlanSubscription extends Model
     public function getSlugOptions(): SlugOptions
     {
         return SlugOptions::create()
+                          ->allowDuplicateSlugs()
                           ->doNotGenerateSlugsOnUpdate()
                           ->generateSlugsFrom('name')
                           ->saveSlugsTo('slug');
